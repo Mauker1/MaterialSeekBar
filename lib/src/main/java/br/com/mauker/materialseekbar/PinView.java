@@ -30,7 +30,9 @@ import android.view.View;
  * Represents a thumb in the RangeBar slider. This is the handle for the slider
  * that is pressed and slid.
  */
-class PinView extends View {
+public class PinView extends View {
+
+    private static final String LOG_TAG = PinView.class.getSimpleName();
 
     // Private Constants ///////////////////////////////////////////////////////
 
@@ -63,6 +65,7 @@ class PinView extends View {
 
     private Drawable mPin;
 
+    // The displayed value on the pin, when selected.
     private String mValue;
 
     // Radius of the new thumb if selected
@@ -124,10 +127,10 @@ class PinView extends View {
         mIsTemporary = pinsAreTemporary;
 
         mPinPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                15, res.getDisplayMetrics());
+                20, res.getDisplayMetrics());
         mCircleRadiusPx = circleRadius;
         mTextYPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                3.5f, res.getDisplayMetrics());
+                8f, res.getDisplayMetrics());
         // If one of the attributes are set, but the others aren't, set the
         // attributes to default
         if (pinRadiusDP == -1) {
@@ -139,9 +142,10 @@ class PinView extends View {
                     pinRadiusDP,
                     res.getDisplayMetrics());
         }
+
         //Set text size in px from dp
         int textSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP,
-                20, res.getDisplayMetrics());
+                5, res.getDisplayMetrics());
 
         // Creates the paint and sets the Paint values
         mTextPaint = new Paint();
@@ -257,12 +261,23 @@ class PinView extends View {
     //Draw the circle regardless of pressed state. If pin size is >0 then also draw the pin and text
     @Override
     public void draw(Canvas canvas) {
-        canvas.drawCircle(mX, mY, mCircleRadiusPx, mCirclePaint);
+
         //Draw pin if pressed
         if (mPinRadiusPx > 0 && (mHasBeenPressed || !mIsTemporary)) {
-            mBounds.set((int) mX - mPinRadiusPx,
+//            mBounds.set(
+//                    (int) mX - mPinRadiusPx,
+//                    (int) mY - (mPinRadiusPx * 2) - (int) mPinPadding,
+//                    (int) mX + mPinRadiusPx,
+//                    (int) mY - (int) mPinPadding
+//            );
+
+            mBounds.set(
+                    (int) mX - mPinRadiusPx,
                     (int) mY - (mPinRadiusPx * 2) - (int) mPinPadding,
-                    (int) mX + mPinRadiusPx, (int) mY - (int) mPinPadding);
+                    (int) mX + mPinRadiusPx,
+                    (int) mY - (int) mPinPadding
+            );
+
             mPin.setBounds(mBounds);
             String text = mValue;
 
@@ -271,9 +286,15 @@ class PinView extends View {
             mTextPaint.setTextAlign(Paint.Align.CENTER);
             mPin.setColorFilter(mPinFilter);
             mPin.draw(canvas);
-            canvas.drawText(text,
-                    mX, mY - mPinRadiusPx - mPinPadding + mTextYPadding,
-                    mTextPaint);
+            canvas.drawText(
+                    text,
+                    mX,
+                    mY - mPinRadiusPx - mPinPadding + mTextYPadding,
+                    mTextPaint
+            );
+        }
+        else {
+            canvas.drawCircle(mX, mY, mCircleRadiusPx, mCirclePaint);
         }
         super.draw(canvas);
     }
@@ -282,7 +303,7 @@ class PinView extends View {
 
     //Set text size based on available pin width.
     private void calibrateTextSize(Paint paint, String text, float boxWidth) {
-        paint.setTextSize(20);
+        paint.setTextSize(mMinPinFont);
 
         float textSize = paint.measureText(text);
         Log.d("pin","textSize: " + textSize);
@@ -295,8 +316,8 @@ class PinView extends View {
             estimatedFontSize = mMaxPinFont;
             Log.d("pin","> mMaxPinFont - Value: " + estimatedFontSize);
         }
-        Log.d("pin","estimatedSize: " + estimatedFontSize);
-        Log.d("pin","size: " + estimatedFontSize * mDensity);
-        paint.setTextSize(estimatedFontSize * mDensity*2);
+//        Log.d("pin","estimatedSize: " + estimatedFontSize);
+//        Log.d("pin","size: " + estimatedFontSize * mDensity);
+        paint.setTextSize(estimatedFontSize * mDensity*1.5f);
     }
 }
