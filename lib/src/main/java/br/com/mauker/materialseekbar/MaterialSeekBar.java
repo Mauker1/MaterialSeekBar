@@ -11,7 +11,6 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -197,12 +196,9 @@ public class MaterialSeekBar extends View {
         mRealLeft = getPaddingLeft() + mPaddingSize;
         mRealRight = getWidth() - getPaddingRight() - mPaddingSize;
         // TODO - Aqui, você tem que dar o tamanho da budega. Adicionando o tamanho da barra + o da bola e o do pin.
-        Log.i(LOG_TAG,"10: " + dp2px(10));
-        Log.i(LOG_TAG,"20: " + dp2px(20));
-        Log.i(LOG_TAG,"40: " + dp2px(40));
-        Log.i(LOG_TAG,"60: " + dp2px(60));
-        Log.i(LOG_TAG,"80: " + dp2px(80));
-        mRealTop = getPaddingTop() + mPaddingSize + 80;
+
+//        mRealTop = getPaddingTop() + mPaddingSize + 80;
+        mRealTop = getPaddingTop() + mPaddingSize;
         mRealBottom = getHeight() - getPaddingBottom() - mPaddingSize;
 
 //        //init size
@@ -270,22 +266,23 @@ public class MaterialSeekBar extends View {
             mViewHeight = DEFAULT_HEIGHT;
         }
 
-        Log.d(LOG_TAG,"onMeasure w: " + mViewWidth + " height: " + mViewHeight);
+//        Log.d(LOG_TAG,"onMeasure w: " + mViewWidth + " height: " + mViewHeight);
 //        Log.d(LOG_TAG,"onMeasure new h: " + (mThumbHeight + mBarHeight));
-        setMeasuredDimension(mViewWidth, mViewHeight + 80);
+//        setMeasuredDimension(mViewWidth, mViewHeight + 80);
+        setMeasuredDimension(mViewWidth, mViewHeight);
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         init();
-        float thumbY = mColorRect.top + mColorRect.height() / 2;
-        float colorPosition = (float) mCurrentValue / mMaxValue * mBarWidth;
-        mPin = new PinView(getContext());
-        // TODO - Allow the user to change the sizes.
-        mPin.init(getContext(),thumbY,1000,pickColor(colorPosition),Color.WHITE,dp2px(6),pickColor(colorPosition),8,20, mIsPinTemporary);
-        mPin.setX(mRealLeft);
-        mPin.setXValue(String.valueOf(mCurrentValue));
+//        float thumbY = mColorRect.top + mColorRect.height() / 2;
+//        float colorPosition = (float) mCurrentValue / mMaxValue * mBarWidth;
+//        mPin = new PinView(getContext());
+//        // TODO - Allow the user to change the sizes.
+//        mPin.init(getContext(),thumbY,1000,pickColor(colorPosition),Color.WHITE,dp2px(6),pickColor(colorPosition),8,20, mIsPinTemporary);
+//        mPin.setX(mRealLeft);
+//        mPin.setXValue(String.valueOf(mCurrentValue));
         mTransparentBitmap = Bitmap.createBitmap(w,h, Bitmap.Config.ARGB_4444);
         mTransparentBitmap.eraseColor(Color.TRANSPARENT);
     }
@@ -300,7 +297,7 @@ public class MaterialSeekBar extends View {
         Paint colorPaint = new Paint();
         colorPaint.setAntiAlias(true);
         colorPaint.setColor(pickColor(colorPosition));
-        int[] toAlpha=new int[]{Color.argb(255, mRed, mGreen, mBlue),Color.argb(0, mRed, mGreen, mBlue)};
+//        int[] toAlpha = new int[]{Color.argb(255, mRed, mGreen, mBlue),Color.argb(0, mRed, mGreen, mBlue)};
         //clear
         canvas.drawBitmap(mTransparentBitmap,0,0,null);
 
@@ -342,15 +339,17 @@ public class MaterialSeekBar extends View {
 //        canvas.drawCircle(thumbX, thumbY, mThumbHeight / 3, thumbGradientPaint);
 //        canvas.drawCircle(thumbX, thumbY, mThumbHeight / 3, strokePaint);
 
-        mPin.setY(thumbY);
-        mPin.draw(canvas);
+        // TODO - Re-enable
+//        mPin.setY(thumbY);
+//        mPin.draw(canvas);
 
         if (mIsPressed) {
-            mPin.setY(thumbY);
-            mPin.draw(canvas);
+            canvas.drawCircle(thumbX, thumbY, mThumbHeight / 2, colorPaint);
+//            mPin.setY(thumbY);
+//            mPin.draw(canvas);
         }
         else {
-//            canvas.drawCircle(thumbX, thumbY, mThumbHeight / 4, colorPaint);
+            canvas.drawCircle(thumbX, thumbY, mThumbHeight / 3, colorPaint);
         }
 
         super.onDraw(canvas);
@@ -370,24 +369,25 @@ public class MaterialSeekBar extends View {
                 if(isOnBar(mColorRect, x, y)){
                     mIsMoving = true;
                 }
-                pressPin(mPin);
+                // TODO - Re-enable
+//                pressPin(mPin);
                 break;
             case MotionEvent.ACTION_MOVE:
                 getParent().requestDisallowInterceptTouchEvent(true);
                 if(mIsMoving){
                     // TODO - This is the actual value from within the range.
                     float value = (x - mRealLeft) / mBarWidth * mMaxValue;
-                    Log.d(LOG_TAG,"Value: " + value);
+//                    Log.d(LOG_TAG,"Value: " + value);
                     mCurrentValue = (int) value;
-                    Log.d(LOG_TAG,"Value (int): " + mCurrentValue);
+//                    Log.d(LOG_TAG,"Value (int): " + mCurrentValue);
 
                     if (mCurrentValue < 0) mCurrentValue = 0;
                     if (mCurrentValue > mMaxValue) mCurrentValue = mMaxValue;
 
                     // Change the pin value to the current position.
-                    mPin.setXValue(String.valueOf(mCurrentValue));
+//                    mPin.setXValue(String.valueOf(mCurrentValue));
 
-                    onActionMove();
+//                    onActionMove();
                 }
 
                 // TODO - Create listener.
@@ -398,7 +398,7 @@ public class MaterialSeekBar extends View {
             case MotionEvent.ACTION_UP:
                 mIsPressed = false;
                 mIsMoving = false;
-                releasePin(mPin);
+//                releasePin(mPin);
                 break;
         }
         return true;
@@ -468,14 +468,14 @@ public class MaterialSeekBar extends View {
      */
     private int[] getColorsById(int id){
         if(isInEditMode()){
-            String[] s=mContext.getResources().getStringArray(id);
+            String[] s = mContext.getResources().getStringArray(id);
             int[] colors = new int[s.length];
             for (int j = 0; j < s.length; j++){
                 colors[j] = Color.parseColor(s[j]);
             }
             return colors;
         } else {
-            TypedArray typedArray=mContext.getResources().obtainTypedArray(id);
+            TypedArray typedArray = mContext.getResources().obtainTypedArray(id);
             int[] colors = new int[typedArray.length()];
             for (int j = 0; j < typedArray.length(); j++){
                 colors[j] = typedArray.getColor(j,Color.BLACK);

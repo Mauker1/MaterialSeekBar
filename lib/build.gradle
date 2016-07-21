@@ -10,7 +10,7 @@ android {
         minSdkVersion 14
         targetSdkVersion 24
         versionCode 1
-        versionName "1.0"
+        versionName "0.1.0"
 
         buildConfigField INT, "DEFAULT_PIN_MIN_FONT", "8"
         buildConfigField INT, "DEFAULT_PIN_MAX_FONT", "20"
@@ -27,3 +27,11 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:24.0.0'
 }
+
+ext {
+    PUBLISH_GROUP_ID = 'br.com.mauker.materialseekbar'
+    PUBLISH_ARTIFACT_ID = 'materialseekbar'
+    PUBLISH_VERSION = '0.1.0'
+}
+
+apply from: 'https://raw.githubusercontent.com/blundell/release-android-library/master/android-release-aar.gradle'
