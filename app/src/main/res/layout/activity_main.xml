@@ -22,7 +22,7 @@
         android:layout_below="@+id/tv_hw"/>
 
 
-    <br.com.mauker.materialseekbar.ColorSeekBar
+    <br.com.mauker.materialseekbar.MaterialSeekBar
         android:id="@+id/sb2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -35,7 +35,14 @@
         android:layout_below="@+id/sb2"/>
 
     <SeekBar
+        android:id="@+id/sb4"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/sb3"/>
+
+    <br.com.mauker.materialseekbar.MaterialSeekBar
+        android:id="@+id/sb5"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/sb4"/>
 </RelativeLayout>

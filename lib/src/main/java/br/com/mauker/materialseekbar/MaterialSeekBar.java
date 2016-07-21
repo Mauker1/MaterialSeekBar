@@ -3,7 +3,11 @@ package br.com.mauker.materialseekbar;
 import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.Build;
 import android.util.AttributeSet;
@@ -77,6 +81,13 @@ public class MaterialSeekBar extends View {
 
     private int mThumbHeight;
 
+    private int mBackgroundColor = 0xffffffff;
+
+    /**
+     * Additional padding required for the thumb and pin.
+     */
+    private int mPaddingSize;
+
     /**
      * The width of this Seek Bar, in pixels.
      */
@@ -109,7 +120,15 @@ public class MaterialSeekBar extends View {
     /**
      * Whether the Seek Bar's pin is always visible or not.
      */
-    private boolean mIsPinPermanent;
+    private boolean mIsPinTemporary;
+
+    // ----- Paints ----- //
+
+    private Paint colorPaint;
+
+    private Paint mColorRectPaint;
+
+    private Bitmap mTransparentBitmap;
 
     // ----- UI Elements ----- //
 
@@ -134,6 +153,7 @@ public class MaterialSeekBar extends View {
     public MaterialSeekBar(Context context, AttributeSet attrs, int defStyleAttr){
         super(context, attrs, defStyleAttr);
         init(context, attrs, defStyleAttr, 0);
+
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -143,7 +163,67 @@ public class MaterialSeekBar extends View {
     }
 
     protected void init(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes){
-        // applyStyle(context, attrs, defStyleAttr, defStyleRes);
+        applyStyle(context, attrs, defStyleAttr, defStyleRes);
+    }
+
+    protected void applyStyle(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes){
+        mContext = context;
+        //get attributes
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.ColorSeekBar, defStyleAttr, defStyleRes);
+        int colorsId = a.getResourceId(R.styleable.ColorSeekBar_colors, 0);
+        mMaxValue = a.getInteger(R.styleable.ColorSeekBar_maxValue,100);
+        mCurrentValue = a.getInteger(R.styleable.ColorSeekBar_colorBarValue,0);
+        mBackgroundColor = a.getColor(R.styleable.ColorSeekBar_bgColor, Color.TRANSPARENT);
+        mBarHeight = (int)a.getDimension(R.styleable.ColorSeekBar_barHeight,(float)dp2px(3));
+        mThumbHeight = (int)a.getDimension(R.styleable.ColorSeekBar_thumbHeight,(float)dp2px(20));
+        a.recycle();
+
+        mIsPinTemporary = true;
+        mIsPressed = false;
+
+        if(colorsId != 0) mColors = getColorsById(colorsId);
+
+        setBackgroundColor(mBackgroundColor);
+
+        init();
+    }
+
+    private void init() {
+        //init l r t b
+
+        mThumbRadius = mThumbHeight / 2;
+//        mPaddingSize = (int)mThumbRadius;
+
+        mRealLeft = getPaddingLeft() + mPaddingSize;
+        mRealRight = getWidth() - getPaddingRight() - mPaddingSize;
+        // TODO - Aqui, você tem que dar o tamanho da budega. Adicionando o tamanho da barra + o da bola e o do pin.
+        Log.i(LOG_TAG,"10: " + dp2px(10));
+        Log.i(LOG_TAG,"20: " + dp2px(20));
+        Log.i(LOG_TAG,"40: " + dp2px(40));
+        Log.i(LOG_TAG,"60: " + dp2px(60));
+        Log.i(LOG_TAG,"80: " + dp2px(80));
+        mRealTop = getPaddingTop() + mPaddingSize + 80;
+        mRealBottom = getHeight() - getPaddingBottom() - mPaddingSize;
+
+//        //init size
+//        mThumbRadius = mThumbHeight / 2;
+        mPaddingSize = mThumbRadius;
+        mBarWidth = mRealRight - mRealLeft;
+
+        //init rect
+        mColorRect = new Rect(mRealLeft , mRealTop, mRealRight, mRealTop + mBarHeight);
+
+        int bgTop = mRealTop + mColorRect.height()/4;
+
+        mBgRect = new Rect(mRealLeft, bgTop, mRealRight, bgTop + (mBarHeight/2));
+
+        //init paint
+//        mColorGradient = new LinearGradient(0, 0, mColorRect.width(), 0, mColors, null, Shader.TileMode.MIRROR);
+        mColorRectPaint = new Paint();
+        // TODO - Get back.
+        //mColorRectPaint.setShader(mColorGradient);
+        mColorRectPaint.setAntiAlias(true);
+
     }
 
     // ----- Draw and measure methods ----- //
@@ -195,6 +275,88 @@ public class MaterialSeekBar extends View {
         setMeasuredDimension(mViewWidth, mViewHeight + 80);
     }
 
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        init();
+        float thumbY = mColorRect.top + mColorRect.height() / 2;
+        float colorPosition = (float) mCurrentValue / mMaxValue * mBarWidth;
+        mPin = new PinView(getContext());
+        // TODO - Allow the user to change the sizes.
+        mPin.init(getContext(),thumbY,1000,pickColor(colorPosition),Color.WHITE,dp2px(6),pickColor(colorPosition),8,20, mIsPinTemporary);
+        mPin.setX(mRealLeft);
+        mPin.setXValue(String.valueOf(mCurrentValue));
+        mTransparentBitmap = Bitmap.createBitmap(w,h, Bitmap.Config.ARGB_4444);
+        mTransparentBitmap.eraseColor(Color.TRANSPARENT);
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        // TODO - Create new method to update the values without instantiation.
+        init();
+        float colorPosition = (float) mCurrentValue / mMaxValue * mBarWidth;
+
+        // TODO - Fix this performance issue
+        Paint colorPaint = new Paint();
+        colorPaint.setAntiAlias(true);
+        colorPaint.setColor(pickColor(colorPosition));
+        int[] toAlpha=new int[]{Color.argb(255, mRed, mGreen, mBlue),Color.argb(0, mRed, mGreen, mBlue)};
+        //clear
+        canvas.drawBitmap(mTransparentBitmap,0,0,null);
+
+        // TODO - Global Paint.
+        Paint bgPaint = new Paint();
+        bgPaint.setAntiAlias(true);
+        bgPaint.setColor(Color.LTGRAY);
+
+        mColorRectPaint.setColor(colorPaint.getColor());
+        //draw color bar
+        canvas.drawRect(mBgRect, bgPaint);
+
+        //draw color bar thumb
+        float thumbX = colorPosition + mRealLeft;
+
+        canvas.drawRect(mColorRect.left,mColorRect.top,thumbX,mColorRect.bottom, mColorRectPaint);
+
+        float thumbY = mColorRect.top + mColorRect.height() / 2;
+
+//        canvas.drawCircle(thumbX,thumbY , mBarHeight / 2 + 5, colorPaint);
+
+
+        // TODO - Fix this performance issue
+        //draw color bar thumb radial gradient shader
+//        RadialGradient thumbShader  = new RadialGradient(thumbX,  thumbY,  mThumbRadius, toAlpha, null, Shader.TileMode.MIRROR);
+//        RadialGradient thumbShader2  = new RadialGradient(thumbX,  thumbY,  mThumbRadius, Color.argb(0, mRed, mGreen, mBlue), Color.argb(255, mRed, mGreen, mBlue), Shader.TileMode.MIRROR);
+//        SweepGradient ts = new SweepGradient(thumbX, thumbY, toAlpha,null);
+        Paint thumbGradientPaint = new Paint();
+        Paint strokePaint = new Paint();
+        thumbGradientPaint.setAntiAlias(true);
+        thumbGradientPaint.setColor(pickColor(colorPosition));
+        thumbGradientPaint.setAlpha(127);
+        thumbGradientPaint.setStyle(Paint.Style.FILL);
+        strokePaint.setAntiAlias(true);
+        strokePaint.setColor(pickColor(colorPosition));
+        strokePaint.setStrokeWidth(8);
+//        thumbGradientPaint.setShader(thumbShader2);
+        strokePaint.setStyle(Paint.Style.STROKE);
+//        canvas.drawCircle(thumbX, thumbY, mThumbHeight / 3, thumbGradientPaint);
+//        canvas.drawCircle(thumbX, thumbY, mThumbHeight / 3, strokePaint);
+
+        mPin.setY(thumbY);
+        mPin.draw(canvas);
+
+        if (mIsPressed) {
+            mPin.setY(thumbY);
+            mPin.draw(canvas);
+        }
+        else {
+//            canvas.drawCircle(thumbX, thumbY, mThumbHeight / 4, colorPaint);
+        }
+
+        super.onDraw(canvas);
+    }
+
+
     // ----- Touch events ----- //
 
     @Override
@@ -225,8 +387,7 @@ public class MaterialSeekBar extends View {
                     // Change the pin value to the current position.
                     mPin.setXValue(String.valueOf(mCurrentValue));
 
-                    onActionMove(x);
-
+                    onActionMove();
                 }
 
                 // TODO - Create listener.
@@ -243,11 +404,10 @@ public class MaterialSeekBar extends View {
         return true;
     }
 
-    // TODO - x = colorPosition + mRealLeft
-    private void onActionMove(float x) {
+    private void onActionMove() {
         float colorPosition = (float) mCurrentValue / mMaxValue * mBarWidth;
         mPin.setColor(pickColor(colorPosition));
-        movePin(mPin, x);
+        movePin(mPin, colorPosition + mRealLeft);
     }
 
     /**
@@ -301,6 +461,29 @@ public class MaterialSeekBar extends View {
 
     // ----- Getters and Setters ----- //
 
+    /**
+     *
+     * @param id
+     * @return
+     */
+    private int[] getColorsById(int id){
+        if(isInEditMode()){
+            String[] s=mContext.getResources().getStringArray(id);
+            int[] colors = new int[s.length];
+            for (int j = 0; j < s.length; j++){
+                colors[j] = Color.parseColor(s[j]);
+            }
+            return colors;
+        } else {
+            TypedArray typedArray=mContext.getResources().obtainTypedArray(id);
+            int[] colors = new int[typedArray.length()];
+            for (int j = 0; j < typedArray.length(); j++){
+                colors[j] = typedArray.getColor(j,Color.BLACK);
+            }
+            typedArray.recycle();
+            return colors;
+        }
+    }
 
 
     // ----- Pin methods ----- //
@@ -325,7 +508,7 @@ public class MaterialSeekBar extends View {
      * @param thumb the thumb to press
      */
     private void pressPin(final PinView thumb) {
-        if (!mIsPinPermanent) {
+        if (mIsPinTemporary) {
             ValueAnimator animator = ValueAnimator.ofFloat(0, 36);
             animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
 
@@ -349,13 +532,7 @@ public class MaterialSeekBar extends View {
      * @param thumb the thumb to release
      */
     private void releasePin(final PinView thumb) {
-//
-//        final float nearestTickX = mBar.getNearestTickCoordinate(thumb);
-//        thumb.setX(nearestTickX);
-//        int tickIndex = mBar.getNearestTickIndex(thumb);
-//        thumb.setXValue(getPinValue(tickIndex));
-
-        if (!mIsPinPermanent) {
+        if (mIsPinTemporary) {
             ValueAnimator animator = ValueAnimator.ofFloat(36, 0);
             animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
 
@@ -373,5 +550,12 @@ public class MaterialSeekBar extends View {
         }
 
         thumb.release();
+    }
+
+    // Others
+
+    public int dp2px(float dpValue) {
+        final float scale = mContext.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
     }
 }
