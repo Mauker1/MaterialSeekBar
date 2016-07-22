@@ -9,8 +9,8 @@ android {
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 24
-        versionCode 1
-        versionName "0.1.0"
+        versionCode 2
+        versionName "0.2.0"
 
         buildConfigField INT, "DEFAULT_PIN_MIN_FONT", "8"
         buildConfigField INT, "DEFAULT_PIN_MAX_FONT", "20"
@@ -31,7 +31,7 @@ dependencies {
 ext {
     PUBLISH_GROUP_ID = 'br.com.mauker.materialseekbar'
     PUBLISH_ARTIFACT_ID = 'materialseekbar'
-    PUBLISH_VERSION = '0.1.0'
+    PUBLISH_VERSION = '0.2.0'
 }
 
 apply from: 'https://raw.githubusercontent.com/blundell/release-android-library/master/android-release-aar.gradle'

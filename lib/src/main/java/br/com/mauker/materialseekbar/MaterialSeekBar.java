@@ -397,8 +397,8 @@ public class MaterialSeekBar extends View {
         float x = event.getX();
         float y = event.getY();
 
-        if (Build.VERSION.SDK_INT >= 19)
-            Log.d(LOG_TAG,"Touch event: " + MotionEvent.actionToString(event.getAction()));
+//        if (Build.VERSION.SDK_INT >= 19)
+//            Log.d(LOG_TAG,"Touch event: " + MotionEvent.actionToString(event.getAction()));
 
         switch(event.getAction()) {
             case MotionEvent.ACTION_DOWN:
