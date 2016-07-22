@@ -11,6 +11,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -31,7 +32,7 @@ public class MaterialSeekBar extends View {
 
     private static final int DEFAULT_WIDTH = 500;
 
-    private static final int DEFAULT_HEIGHT = 150;
+    private static final int DEFAULT_HEIGHT = 100;
 
     /**
      * The Context that this view appears in.
@@ -127,6 +128,8 @@ public class MaterialSeekBar extends View {
 
     private Paint mColorRectPaint;
 
+    private Paint mBgPaint;
+
     private Bitmap mTransparentBitmap;
 
     // ----- UI Elements ----- //
@@ -184,6 +187,10 @@ public class MaterialSeekBar extends View {
 
         setBackgroundColor(mBackgroundColor);
 
+        mColorRectPaint = new Paint();
+        colorPaint = new Paint();
+        mBgPaint = new Paint();
+
         init();
     }
 
@@ -215,11 +222,42 @@ public class MaterialSeekBar extends View {
 
         //init paint
 //        mColorGradient = new LinearGradient(0, 0, mColorRect.width(), 0, mColors, null, Shader.TileMode.MIRROR);
-        mColorRectPaint = new Paint();
+//        mColorRectPaint = new Paint();
         // TODO - Get back.
         //mColorRectPaint.setShader(mColorGradient);
         mColorRectPaint.setAntiAlias(true);
 
+    }
+
+    private void updateInit() {
+        //init l r t b
+
+        mThumbRadius = mThumbHeight / 2;
+
+        mRealLeft = getPaddingLeft() + mPaddingSize;
+        mRealRight = getWidth() - getPaddingRight() - mPaddingSize;
+
+        mRealTop = getPaddingTop() + mPaddingSize;
+        mRealBottom = getHeight() - getPaddingBottom() - mPaddingSize;
+
+//        //init size
+        mPaddingSize = mThumbRadius;
+        mBarWidth = mRealRight - mRealLeft;
+
+        //init rect
+        mColorRect.left = mRealLeft;
+        mColorRect.top = mRealTop;
+        mColorRect.right = mRealRight;
+        mColorRect.bottom = mRealTop + mBarHeight;
+
+        int bgTop = mRealTop + mColorRect.height()/4;
+
+        mBgRect.left = mRealLeft;
+        mBgRect.top = bgTop;
+        mBgRect.right = mRealRight;
+        mBgRect.bottom = bgTop + (mBarHeight/2);
+
+        mColorRectPaint.setAntiAlias(true);
     }
 
     // ----- Draw and measure methods ----- //
@@ -275,7 +313,7 @@ public class MaterialSeekBar extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        init();
+        updateInit();
 //        float thumbY = mColorRect.top + mColorRect.height() / 2;
 //        float colorPosition = (float) mCurrentValue / mMaxValue * mBarWidth;
 //        mPin = new PinView(getContext());
@@ -289,26 +327,22 @@ public class MaterialSeekBar extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        // TODO - Create new method to update the values without instantiation.
-        init();
+        updateInit();
         float colorPosition = (float) mCurrentValue / mMaxValue * mBarWidth;
 
-        // TODO - Fix this performance issue
-        Paint colorPaint = new Paint();
+//        Paint colorPaint = new Paint();
         colorPaint.setAntiAlias(true);
         colorPaint.setColor(pickColor(colorPosition));
 //        int[] toAlpha = new int[]{Color.argb(255, mRed, mGreen, mBlue),Color.argb(0, mRed, mGreen, mBlue)};
         //clear
         canvas.drawBitmap(mTransparentBitmap,0,0,null);
 
-        // TODO - Global Paint.
-        Paint bgPaint = new Paint();
-        bgPaint.setAntiAlias(true);
-        bgPaint.setColor(Color.LTGRAY);
+        mBgPaint.setAntiAlias(true);
+        mBgPaint.setColor(Color.LTGRAY);
 
         mColorRectPaint.setColor(colorPaint.getColor());
         //draw color bar
-        canvas.drawRect(mBgRect, bgPaint);
+        canvas.drawRect(mBgRect, mBgPaint);
 
         //draw color bar thumb
         float thumbX = colorPosition + mRealLeft;
@@ -325,17 +359,17 @@ public class MaterialSeekBar extends View {
 //        RadialGradient thumbShader  = new RadialGradient(thumbX,  thumbY,  mThumbRadius, toAlpha, null, Shader.TileMode.MIRROR);
 //        RadialGradient thumbShader2  = new RadialGradient(thumbX,  thumbY,  mThumbRadius, Color.argb(0, mRed, mGreen, mBlue), Color.argb(255, mRed, mGreen, mBlue), Shader.TileMode.MIRROR);
 //        SweepGradient ts = new SweepGradient(thumbX, thumbY, toAlpha,null);
-        Paint thumbGradientPaint = new Paint();
-        Paint strokePaint = new Paint();
-        thumbGradientPaint.setAntiAlias(true);
-        thumbGradientPaint.setColor(pickColor(colorPosition));
-        thumbGradientPaint.setAlpha(127);
-        thumbGradientPaint.setStyle(Paint.Style.FILL);
-        strokePaint.setAntiAlias(true);
-        strokePaint.setColor(pickColor(colorPosition));
-        strokePaint.setStrokeWidth(8);
-//        thumbGradientPaint.setShader(thumbShader2);
-        strokePaint.setStyle(Paint.Style.STROKE);
+//        Paint thumbGradientPaint = new Paint();
+//        Paint strokePaint = new Paint();
+//        thumbGradientPaint.setAntiAlias(true);
+//        thumbGradientPaint.setColor(pickColor(colorPosition));
+//        thumbGradientPaint.setAlpha(127);
+//        thumbGradientPaint.setStyle(Paint.Style.FILL);
+//        strokePaint.setAntiAlias(true);
+//        strokePaint.setColor(pickColor(colorPosition));
+//        strokePaint.setStrokeWidth(8);
+////        thumbGradientPaint.setShader(thumbShader2);
+//        strokePaint.setStyle(Paint.Style.STROKE);
 //        canvas.drawCircle(thumbX, thumbY, mThumbHeight / 3, thumbGradientPaint);
 //        canvas.drawCircle(thumbX, thumbY, mThumbHeight / 3, strokePaint);
 
@@ -363,11 +397,23 @@ public class MaterialSeekBar extends View {
         float x = event.getX();
         float y = event.getY();
 
-        switch(event.getAction()){
+        if (Build.VERSION.SDK_INT >= 19)
+            Log.d(LOG_TAG,"Touch event: " + MotionEvent.actionToString(event.getAction()));
+
+        switch(event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 mIsPressed = true;
                 if(isOnBar(mColorRect, x, y)){
+                    Log.d(LOG_TAG,"On bar!");
                     mIsMoving = true;
+
+                    float value = (x - mRealLeft) / mBarWidth * mMaxValue;
+                    mCurrentValue = (int) value;
+
+                    if (mCurrentValue < 0) mCurrentValue = 0;
+                    if (mCurrentValue > mMaxValue) mCurrentValue = mMaxValue;
+
+                    invalidate();
                 }
                 // TODO - Re-enable
 //                pressPin(mPin);
@@ -377,9 +423,7 @@ public class MaterialSeekBar extends View {
                 if(mIsMoving){
                     // TODO - This is the actual value from within the range.
                     float value = (x - mRealLeft) / mBarWidth * mMaxValue;
-//                    Log.d(LOG_TAG,"Value: " + value);
                     mCurrentValue = (int) value;
-//                    Log.d(LOG_TAG,"Value (int): " + mCurrentValue);
 
                     if (mCurrentValue < 0) mCurrentValue = 0;
                     if (mCurrentValue > mMaxValue) mCurrentValue = mMaxValue;
@@ -396,9 +440,11 @@ public class MaterialSeekBar extends View {
                 invalidate();
                 break;
             case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
                 mIsPressed = false;
                 mIsMoving = false;
 //                releasePin(mPin);
+                invalidate();
                 break;
         }
         return true;
